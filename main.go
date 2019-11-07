@@ -40,15 +40,16 @@ func main() {
 		c1, c2, c3, c4,
 	}
 
-	fmt.Print(c1.ToString())
-	fmt.Print(c2.ToString())
-	fmt.Print(c3.ToString())
-	fmt.Print(c4.ToString())
-	fmt.Println()
-
 	lambda := wep.CalculateLambda(codewordArr[:], 0.1)
-	for _, val := range lambda {
-		fmt.Println(val.ToString())
+
+	for key, val := range lambda {
+		fmt.Println(key.GetId(), " ", val)
 	}
 
+	fmt.Println("Word Error Probability")
+
+	for i := 1; i < 6; i += 1 {
+		crit := float64(i) * 0.1
+		fmt.Println("e: 0.", i, " ", wep.CalculateWordErrorProbability(codewordArr[:], lambda, crit))
+	}
 }

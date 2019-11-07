@@ -73,9 +73,9 @@ func (c *Codeword) GetId() string {
 	return fmt.Sprintf("C%d", c.Idx)
 }
 
-func CalculateLambda(codewordArr []Codeword, errorRate float64) []Likelihood {
+func CalculateLambda(codewordArr []Codeword, errorRate float64) map[Codeword][]string {
 
-	lambda := make([]Likelihood, 0, 8)
+	lambda := make(map[Codeword][]string)
 	e := 0.1
 	for _, val := range SetT {
 		likelihoods := make(map[float64]Codeword)
@@ -103,12 +103,9 @@ func CalculateLambda(codewordArr []Codeword, errorRate float64) []Likelihood {
 			}
 		*/
 		// lambda[keys[len(keys)-1]] = likelihoods[keys[len(keys)-1]]
-		tmpLikelihood := Likelihood{
-			Y:            val,
-			ThisCodeword: likelihoods[keys[len(keys)-1]],
-			Rate:         keys[len(keys)-1],
-		}
-		lambda = append(lambda, tmpLikelihood)
+		key := likelihoods[keys[len(keys)-1]]
+		lambda[key] = append(lambda[key], val)
+
 	}
 	return lambda
 }
@@ -118,19 +115,24 @@ func Cube(target float64) float64 {
 	return math.Pow(target, 3)
 }
 
-func CalculateWordErrorProbability(codewordArr []Codeword, lambda []Likelihood, errorRate float64) float64 {
+func CalculateWordErrorProbability(codewordArr []Codeword, lambda map[Codeword][]string, errorRate float64) float64 {
 	equallyLikelyCodeword := 1 / math.Pow(2, float64(len(codewordArr)))
 
 	var sum float64
-
-	for _, y := range SetT {
-		for _, i := range codewordArr {
-			for _, j := range codewordArr {
-				if i.Idx == j.Idx {
-					continue
-				}
+	for _, codeword := range codewordArr {
+		for key, val := range lambda {
+			if codeword.Idx == key.Idx {
+				continue
 			}
+			var thisMiss, thisMatch int
+			for _, codes := range val {
+				miss, match := codeword.CompareCode(codes)
+				thisMiss += miss
+				thisMatch += match
+			}
+			sum += math.Pow(errorRate, float64(thisMiss)) * math.Pow(1-errorRate, float64(thisMatch))
 		}
 	}
+
 	return sum * equallyLikelyCodeword
 }
