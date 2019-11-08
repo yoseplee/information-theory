@@ -130,7 +130,7 @@ func FileOut(dataToWrite string, fileName string) {
 	fmt.Println("file out done")
 }
 
-func doHomework() {
+func DoHomework2() {
 	entireTextData := []string{
 		"harryPotter1.txt",
 		"harryPotter2.txt",

@@ -97,11 +97,10 @@ func CalculateLambda(codewordArr []Codeword, errorRate float64) map[Codeword][]s
 		}
 		sort.Float64s(keys)
 
-		/*
-			for _, k := range keys {
-				fmt.Printf("%s | C%d - %f\n", val, likelihoods[k].Idx, k)
-			}
-		*/
+		for _, k := range keys {
+			fmt.Printf("%s | C%d - %f\n", val, likelihoods[k].Idx, k)
+		}
+
 		// lambda[keys[len(keys)-1]] = likelihoods[keys[len(keys)-1]]
 		key := likelihoods[keys[len(keys)-1]]
 		lambda[key] = append(lambda[key], val)
@@ -115,7 +114,15 @@ func Cube(target float64) float64 {
 	return math.Pow(target, 3)
 }
 
-func CalculateWordErrorProbability(codewordArr []Codeword, lambda map[Codeword][]string, errorRate float64) float64 {
+func CalculateWordErrorProbability(codewordArr []Codeword, errorRate float64) float64 {
+
+	fmt.Println("Lambda by the maximum likelihood decoding rule")
+	lambda := CalculateLambda(codewordArr[:], errorRate)
+
+	for key, val := range lambda {
+		fmt.Println(key.GetId(), " ", val)
+	}
+
 	equallyLikelyCodeword := 1 / math.Pow(2, float64(len(codewordArr)))
 
 	var sum float64
@@ -135,4 +142,47 @@ func CalculateWordErrorProbability(codewordArr []Codeword, lambda map[Codeword][
 	}
 
 	return sum * equallyLikelyCodeword
+}
+
+func DoHomework4() {
+	var c1 = Codeword{
+		Idx:     1,
+		Symbol:  "00",
+		Encoded: "000",
+		Length:  4,
+	}
+
+	var c2 = Codeword{
+		Idx:     2,
+		Symbol:  "01",
+		Encoded: "101",
+		Length:  4,
+	}
+
+	var c3 = Codeword{
+		Idx:     3,
+		Symbol:  "10",
+		Encoded: "110",
+		Length:  4,
+	}
+
+	var c4 = Codeword{
+		Idx:     4,
+		Symbol:  "11",
+		Encoded: "111",
+		Length:  4,
+	}
+
+	codewordArr := [4]Codeword{
+		c1, c2, c3, c4,
+	}
+
+	fmt.Println()
+	fmt.Println("Word Error Probability")
+
+	for i := 0; i < 6; i++ {
+		crit := float64(i) * 0.1
+		fmt.Printf("e: 0.%d - %f\n", i, CalculateWordErrorProbability(codewordArr[:], crit))
+		fmt.Println()
+	}
 }
