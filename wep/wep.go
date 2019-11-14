@@ -6,20 +6,14 @@ import (
 	"sort"
 )
 
-var SetT [8]string
-
-func init() {
-	SetT = [8]string{
-		"000",
-		"001",
-		"010",
-		"011",
-		"100",
-		"101",
-		"110",
-		"111",
-	}
-}
+var (
+	SetT        [8]string
+	c1          *Codeword
+	c2          *Codeword
+	c3          *Codeword
+	c4          *Codeword
+	codewordArr [4]Codeword
+)
 
 type Codeword struct {
 	Idx     int
@@ -32,6 +26,51 @@ type Likelihood struct {
 	Y            string
 	ThisCodeword Codeword
 	Rate         float64
+}
+
+func init() {
+	SetT = [8]string{
+		"000",
+		"001",
+		"010",
+		"011",
+		"100",
+		"101",
+		"110",
+		"111",
+	}
+
+	c1 = &Codeword{
+		Idx:     1,
+		Symbol:  "00",
+		Encoded: "000",
+		Length:  4,
+	}
+
+	c2 = &Codeword{
+		Idx:     2,
+		Symbol:  "01",
+		Encoded: "101",
+		Length:  4,
+	}
+
+	c3 = &Codeword{
+		Idx:     3,
+		Symbol:  "10",
+		Encoded: "110",
+		Length:  4,
+	}
+
+	c4 = &Codeword{
+		Idx:     4,
+		Symbol:  "11",
+		Encoded: "111",
+		Length:  4,
+	}
+
+	codewordArr = [4]Codeword{
+		*c1, *c2, *c3, *c4,
+	}
 }
 
 func (l Likelihood) ToString() string {
@@ -97,9 +136,11 @@ func CalculateLambda(codewordArr []Codeword, errorRate float64) map[Codeword][]s
 		}
 		sort.Float64s(keys)
 
-		for _, k := range keys {
-			fmt.Printf("%s | C%d - %f\n", val, likelihoods[k].Idx, k)
-		}
+		/*
+			for _, k := range keys {
+				fmt.Printf("%s | C%d - %f\n", val, likelihoods[k].Idx, k)
+			}
+		*/
 
 		// lambda[keys[len(keys)-1]] = likelihoods[keys[len(keys)-1]]
 		key := likelihoods[keys[len(keys)-1]]
@@ -144,38 +185,68 @@ func CalculateWordErrorProbability(codewordArr []Codeword, errorRate float64) fl
 	return sum * equallyLikelyCodeword
 }
 
+func CalculateUnionBound(codewordArr []Codeword, errorRate float64) float64 {
+
+	fmt.Println("Lambda by the maximum likelihood decoding rule")
+	lambda := CalculateLambda(codewordArr[:], errorRate)
+
+	for key, val := range lambda {
+		fmt.Println(key.GetId(), " ", val)
+	}
+
+	equallyLikelyCodeword := 1 / math.Pow(2, float64(len(codewordArr)))
+
+	var sum float64
+	for _, codeword := range codewordArr {
+		for key, val := range lambda {
+			if codeword.Idx == key.Idx {
+				continue
+			}
+			var thisMiss, thisMatch int
+			for _, codes := range val {
+				miss, match := codeword.CompareCode(codes)
+				thisMiss += miss
+				thisMatch += match
+			}
+			// sum += math.Pow(errorRate, float64(thisMiss)) * math.Pow(1-errorRate, float64(thisMatch))
+			sum += math.Pow(errorRate, float64(thisMiss)) * math.Pow(1-errorRate, float64(thisMatch))
+		}
+	}
+
+	return sum * equallyLikelyCodeword
+}
+
+func CalculateBhattacharyyaBound(codewordArr []Codeword, errorRate float64) float64 {
+
+	fmt.Println("Lambda by the maximum likelihood decoding rule")
+	lambda := CalculateLambda(codewordArr[:], errorRate)
+
+	for key, val := range lambda {
+		fmt.Println(key.GetId(), " ", val)
+	}
+
+	equallyLikelyCodeword := 1 / math.Pow(2, float64(len(codewordArr)))
+
+	var sum float64
+	for _, codeword := range codewordArr {
+		for key, val := range lambda {
+			if codeword.Idx == key.Idx {
+				continue
+			}
+			var thisMiss, thisMatch int
+			for _, codes := range val {
+				miss, match := codeword.CompareCode(codes)
+				thisMiss += miss
+				thisMatch += match
+			}
+			sum += math.Sqrt(math.Pow(1-errorRate, 3) * math.Pow(errorRate, float64(thisMiss)) * math.Pow(1-errorRate, float64(thisMatch)))
+		}
+	}
+
+	return sum * equallyLikelyCodeword
+}
+
 func DoHomework4() {
-	var c1 = Codeword{
-		Idx:     1,
-		Symbol:  "00",
-		Encoded: "000",
-		Length:  4,
-	}
-
-	var c2 = Codeword{
-		Idx:     2,
-		Symbol:  "01",
-		Encoded: "101",
-		Length:  4,
-	}
-
-	var c3 = Codeword{
-		Idx:     3,
-		Symbol:  "10",
-		Encoded: "110",
-		Length:  4,
-	}
-
-	var c4 = Codeword{
-		Idx:     4,
-		Symbol:  "11",
-		Encoded: "111",
-		Length:  4,
-	}
-
-	codewordArr := [4]Codeword{
-		c1, c2, c3, c4,
-	}
 
 	fmt.Println()
 	fmt.Println("Word Error Probability")
@@ -183,6 +254,17 @@ func DoHomework4() {
 	for i := 0; i < 6; i++ {
 		crit := float64(i) * 0.1
 		fmt.Printf("e: 0.%d - %f\n", i, CalculateWordErrorProbability(codewordArr[:], crit))
+		fmt.Println()
+	}
+}
+
+func DoHomework5() {
+	fmt.Println()
+	fmt.Println("Word Error Probability")
+
+	for i := 0; i < 6; i++ {
+		crit := float64(i) * 0.1
+		fmt.Printf("e: 0.%d - %f\n", i, CalculateBhattacharyyaBound(codewordArr[:], crit))
 		fmt.Println()
 	}
 }

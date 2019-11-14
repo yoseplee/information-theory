@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	wep.DoHomework4()
+	wep.DoHomework5()
 }
